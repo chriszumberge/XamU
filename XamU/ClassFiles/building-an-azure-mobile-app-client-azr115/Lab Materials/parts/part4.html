@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+    <title>Add support to our app for offline data caching</title>
+    <link rel="stylesheet" type="text/css" href="./res/styles/normalize.css">
+    <link rel="stylesheet" type="text/css" href="./res/styles/prettify.css" />
+    <link rel="stylesheet" type="text/css" href="./res/styles/styles.css">
+</head>
+
+<body>
+    <!-- Use the same title as the StartHere -->
+    <header>Building an Azure Mobile App Client</header>
+
+    <section id="main">
+
+        <h1 id="page-title"></h1>
+
+        <h2>Duration</h2>
+        <p>10 minutes</p>
+
+        <h2>Goals</h2>
+        <p>
+            In this lab exercise, you will continue your modification of the <b>CastMyVote</b> Xamarin.Forms to add support for offline caching.
+        </p>
+
+        <h2>Assets</h2>
+        <p>
+            There is a completed version of the exercise in the <b>Part 04 Resources</b> folder. You should continue from your current work, or use the completed version in the prior lab folder as a starting point.
+        </p>
+
+        <h2>Challenge</h2>
+        <p>
+        There are several steps we will take for this lab. You can explore on your own to implement the functionality for your service, or use the step-by-step instructions below.
+        </p>
+        <ol>
+            <li>Add the <b>Microsoft.Azure.Mobile.Client.SQLiteStore</b> NuGet package to all the projects.</li>
+            <li>Create a new <code>MobileServiceSQLiteStore</code> to hold our local data.</li>
+            <li>Define our two tables in the SQLite store.</li>
+            <li>Initialize the <code>MobileServiceClient.SyncContext</code> with the SQLite store.</li>
+            <li>Change the table definitions to use <code>IMobileServiceSyncTable</code>.</li>
+        </ol>
+
+        <!-- Steps -->
+        <h1>Steps</h1>
+
+        <h2>Add support for offline caching</h2>
+        <p>
+        To support offline caching, we need to add a reference to another NuGet package and call an initialize method for our iOS application.
+        </p>
+
+        <ol>
+            <li>
+            Add a NuGet reference to the <b>Microsoft.Azure.Mobile.Client.SQLiteStore</b> package to each of the platform-specific (head) projects and to your PCL.
+            </li>
+            <img class="indent-none" src="./res/images/ex4-sqlite-store.png" />
+        </ol>
+
+<p><a href="#" onclick="toggleCode(this,'init_sql');return false;" class="uiitem">Show Code</a><div class="indent-medium" id="init_sql" style="display:none;">
+<pre class="prettyprint">
+public override bool FinishedLaunching(UIApplication app, NSDictionary options)
+{
+    Microsoft.WindowsAzure.MobileServices.CurrentPlatform.Init();
+    <mark>SQLitePCL.CurrentPlatform.Init ();</mark>
+    global::Xamarin.Forms.Forms.Init();
+    LoadApplication(new App());
+
+    return base.FinishedLaunching(app, options);
+}
+</pre></div></p>
+
+        <h2>Initialize the SQLite local cache</h2>
+        <p>
+        Next, we need to initialize our local database so the Azure client can work with a local data source instead of the remote database.
+        </p>
+
+        <ol>
+            <li>Open your <b>AzureSurveyService.cs</b> service you have been working on.</li>
+            <li>
+            In the <code>Initialize</code> method, create a new <code>MobileServiceSQLiteStore</code> and store it in a local field in the method.
+            </li>
+            <li>
+            Next, call <code>DefineTable&lt;T></code> method on the DB store for our two DTOs.
+            </li>
+        </ol>
+<p><a href="#" onclick="toggleCode(this,'alloc_store');return false;" class="uiitem">Show Code</a><div class="indent-medium" id="alloc_store" style="display:none;">
+<pre class="prettyprint">
+void Initialize()
+{
+    if (client != null)
+        return;
+
+    <mark>var store = new MobileServiceSQLiteStore ("survey.db");
+    store.DefineTable&lt;SurveyQuestion> ();
+    store.DefineTable&lt;SurveyResponse> ();</mark>
+
+    client = new MobileServiceClient (AzureUrl);
+    ...
+}
+</pre></div></p> 
+        <ol start="4">
+            <li>
+            Next, call the <code>InitializeAsync</code> method on the <code>SyncContext</code> property of your <code>MobileServiceClient</code>. 
+                <ul class="indent-none">
+                    <li>Pass the created store as the first parameter.</li>
+                    <li>Pass a new instance of a <code>MobileServiceSyncHandler</code> object as the second parameter. This class is what executes the async calls to synchronize the database - we are using the default implementation.</li>
+                </ul>
+            </li>
+            <li>
+            Notice that this method is <em>asynchronous</em> and returns a <code>Task</code>. To make this easier to work with, you can modify the method to be <code>async</code> and return a <code>Task</code> so errors propagate out.
+            </li>
+            <li>
+            Rename the method to <code>InitializeAsync</code> so it's clear that this method is now async. You can use the <b>Rename</b> refactoring to ensure this change goes through the class.
+            </li>
+        </ol>
+ 
+<p><a href="#" onclick="toggleCode(this,'init_context');return false;" class="uiitem">Show Code</a><div class="indent-medium" id="init_context" style="display:none;">
+<pre class="prettyprint">
+<mark>async Task</mark> Initialize<mark>Async</mark>()
+{
+    if (client != null)
+        return;
+
+    var store = new MobileServiceSQLiteStore ("survey.db");
+    store.DefineTable&lt;SurveyQuestion> ();
+    store.DefineTable&lt;SurveyResponse> ();
+
+    client = new MobileServiceClient (AzureUrl);
+    <mark>await client.SyncContext.InitializeAsync (store, new MobileServiceSyncHandler ());</mark>
+    ...
+}
+</pre></div></p> 
+        <ol start="7">
+            <li>That last change ripples throughout our class since we call <code>InitializeAsync</code> from every method. Fixup all the methods, using the <code>await</code> keyword on each call to <code>InitializeAsync</code> - you can use the marked up code below as a guide to apply the keywords into the correct place if you need some help:</li>
+        </ol>
+
+<pre class="codeblock prettyprint">
+public <mark>async</mark> Task AddOrUpdateSurveyResponseAsync (SurveyResponse response)
+{
+    <mark>await</mark> InitializeAsync ();
+    if (string.IsNullOrEmpty(response.Id)) {
+        <mark>await</mark> responseTable.InsertAsync (response);
+    }
+    <mark>await</mark> responseTable.UpdateAsync (response);
+}
+
+public <mark>async</mark> Task DeleteSurveyResponseAsync (SurveyResponse response)
+{
+    <mark>await</mark> InitializeAsync ();
+    <mark>await</mark> responseTable.DeleteAsync (response);
+}
+
+public <mark>async</mark> Task&lt;IEnumerable&lt;SurveyQuestion>> GetQuestionsAsync ()
+{
+    <mark>await</mark> InitializeAsync ();
+    return <mark>await</mark> questionsTable.ReadAsync ();
+}
+
+public async Task&lt;SurveyResponse> GetResponseForSurveyAsync (string questionId, string name)
+{
+    <mark>await</mark> InitializeAsync ();
+    return (await responseTable.Where (r => r.SurveyQuestionId == questionId 
+        &amp;&amp; r.Name == name)
+            .ToEnumerableAsync ()).FirstOrDefault ();
+}
+
+public async Task&lt;IEnumerable&lt;SurveyResponse>> GetResponsesForSurveyAsync (string questionId)
+{
+    <mark>await</mark> InitializeAsync ();
+    return await responseTable
+        .OrderByDescending(r => r.UpdatedAt)
+        .Take(100).ToEnumerableAsync();
+}
+</pre>
+        <h2>Use IMobileServiceSyncTable to query our data</h2>
+        <p>
+            The final step in switching to our local cache is to use the <code>IMobileServiceSyncTable</code> interface instead of our normal <code>IMobileServiceTable</code>.
+        </p>
+        <ol>
+            <li>Change the two fields holding the questions and responses to be a <code>IMobileServiceSyncTable</code>.</li>
+            <li>Change the call to <code>GetTable</code> on the <code>MobileServiceClient></code> to be <code>GetSyncTable</code>.</li>
+            <li>Run the application to see the results.</li>
+            <li>We are now using our local cached data - except we have no data! So the screen will come up but be empty. The next step is to learn how to synchronize our data to the remote DB.</li>
+        </ol>
+
+        <a href="#" onclick="toggleBlock(this, 'uwp_sqlite', 'I am getting a build error from the UWP project!', 'Hide'); return false;" class="uiitem">I am getting a build error from the UWP project!</a>
+            <div class="wsblock" id="uwp_sqlite" style="display:none;">
+                <!-- Each item is in a div "wsitem" -->
+                <div class="wsitem">
+                    <!-- Give it a title and description -->
+                    <b>My Windows projects are not building</b>
+                    <p>
+                	The Windows applications require that you have the SQLite runtime installed on your development machine so it can be bundled into the application. This runtime is available for free from the <b>Tools > Extensions and Updates</b> dialog. Here is the set of libraries you need to have installed:
+					<img class="indent-none" src="./res/images/ex4-sqlite.png" />
+					</p>
+
+					<p>
+					In addition, depending on <em>where</em> you have Visual Studio installed, the path might be incorrect to the SQLite runtime for the Windows projects. Expand the <b>References</b> folder for each of the Windows projects.
+					<img class="indent-none" src="./res/images/ex4-sql-reference1.png" />
+					</p>
+					<p>
+		        	If you see an exclamation mark next to the SQLite reference, then delete the reference and re-add it from the Extensions section of the References dialog as shown here:
+					<img class="indent-none" src="./res/images/ex4-sql-reference2.png" />
+					</p>
+                </div>
+            </div>
+            <br /><br />
+        
+        
+
+        <h1>Summary</h1>
+        <p>
+            In this exercise, you added full support for locally caching data using the built-in support and broke your app! We'll fix it next.
+        </p>
+        <div class="align-right">
+            <a href="../Start%20Here.html">Go Back</a>
+        </div>
+    </section>
+
+    <script src="./res/js/jquery.min.js"></script>
+    <script src="./res/js/prettify.js"></script>
+    <script src="./res/js/script.js"></script>
+
+    <footer>Copyright (C) 2017 Xamarin</footer>
+</body>
+</html>

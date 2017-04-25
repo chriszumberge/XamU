@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+    <title>Add Azure support to our Xamarin application</title>
+    <link rel="stylesheet" type="text/css" href="./res/styles/normalize.css">
+    <link rel="stylesheet" type="text/css" href="./res/styles/prettify.css" />
+    <link rel="stylesheet" type="text/css" href="./res/styles/styles.css">
+</head>
+
+<body>
+    <!-- Use the same title as the StartHere -->
+    <header>Building an Azure Mobile App Client</header>
+
+    <section id="main">
+
+        <h1 id="page-title"></h1>
+
+        <h2>Duration</h2>
+        <p>10 minutes</p>
+
+        <h2>Goals</h2>
+        <p>
+            In this lab exercise, you will modify an existing Xamarin.Forms application to add support for utilizing an Azure mobile service. You can use any mix of the platform projects depending on your development environment (Mac or Windows). All variations are supplied (iOS, Android, UWP, Windows 8.1 and Windows Phone 8.1).
+        </p>
+
+        <h2>Assets</h2>
+        <p>
+            There is both a starter application which has the UI all built out and a completed version of the exercise in the <b>Part 01 Resources</b> folder.
+        </p>
+
+        <h2>Challenge</h2>
+        <p>
+        There are several steps we will take for this lab.
+        </p>
+        <ol>
+            <li>Run and explore the code for the starter project.</li>
+            <li>Add the <b>Microsoft.Azure.Mobile.Client</b> NuGet package to all of the platform-specific projects and the <b>Data</b> project.</li>
+            <li>Initialize the Azure client SDK in your iOS and Android platform projects.</li>
+            <li>Create a new version of the <code>ISurveyQuestionService</code> interface which will interact with Azure using the client SDK.</li>
+            <li>Stub out the retrieval and update methods of the interface and change the <b>MainPage.xaml.cs</b> file to use your new service implementation.</li>
+        </ol>
+
+        <!-- Steps -->
+        <h1>Steps</h1>
+
+        <h2>Explore the Starter Solution</h2>
+        <p>
+        To start with, let's open and explore the starter solution. The application is a Xamarin.Forms based survey/voting application that will use Azure as the database. The starting project has a mocked out service which does all the work locally so you can see it run before we start anything.
+        </p>
+        
+        <ol>
+            <li>Set your preferred platform-specific project as the startup project. Any of them will work.
+                <ul class="indent-none">
+                    <li><b>Hint:</b> For Windows projects, you will likely need to select a configuration other than "AnyCPU".</li>
+                </ul>
+            </li>
+            <li>Build and run the application to see it work.</li>
+            <img class="indent-none" src="./res/images/ex1-running-app.png" />
+
+            <li>Expand the solution - it has 8 projects in it.</li>
+
+            <table class="grid">
+            <tr>
+                <th>Project</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>CastMyVote</td>
+                <td>This is the core Xamarin.Forms view PCL shared assembly. It contains the <code>Page</code> definitions (one for the main page and one for a results page), the models and the code which will interact with the service. Currently, it has a mocked out implementation that does everything with local, hard-coded data. The main thing of interest here is the <code>ISurveyQuestionService</code> interface which you will implement to connect to the Azure service.
+                </td>
+            </tr>
+            <tr>
+                <td>CastMyVote.Droid</td>
+                <td>The Xamarin.Android platform-specific (head) project.</td>
+            </tr>
+            <tr>
+                <td>CastMyVote.iOS</td>
+                <td>The Xamarin.iOS platform-specific (head) project. You will need a Mac host to run this application.</td>
+            </tr>
+            <tr>
+                <td>CastMyVote.UWP</td>
+                <td>The Windows 10 desktop/phone platform-specific (head) project. You will need Visual Studio and Windows to run this project. On macOS, it will be disabled.</td>
+            </tr>
+            <tr>
+                <td>CastMyVote.Windows</td>
+                <td>The Windows 8.1 desktop platform-specific (head) project. You will need Visual Studio and Windows to run this project. On macOS, it will be disabled.</td>
+            </tr>
+            <tr>
+                <td>CastMyVote.WinPhone</td>
+                <td>The Windows 8.1 phone platform-specific (head) project. You will need Visual Studio and Windows to run this project. On macOS, it will be disabled.</td>
+            </tr>
+            </table>
+        </ol>
+
+        <h2>Add the Azure NuGet references</h2>
+        <p>
+        As a starting point, we need the Azure client libraries in our projects. This will allow us to connect to Azure and interact with the exposed table endpoints.
+        </p>
+        <ol>
+            <li>Add the <b>Microsoft.Azure.Mobile.Client</b> NuGet package to all of the projects.</li>
+            <li>Visual Studio will let you do this through a single dialog, Visual Studio for Mac requires that you add the package to each project individually.
+            </li>
+            <img class="indent-none" src="./res/images/ex1-nuget-packages-xs.png" />
+        </ol>
+
+        <h2>Initialize the Azure library</h2>
+        <p>
+        Android and iOS both must initialize the Azure client library by adding a line of code into the initialization of the app. This code must be done in the platform-specific projects as the method isn't available in the PCL profile. You only need to do this for Android and iOS - and only if you plan to run these platforms.
+        </p>
+        <h3>Android</h3>
+        <ol>
+            <li>Open the <b>MainActity.cs</b> file in the Xamarin.Android project. Since this is a Xamarin.Forms app, the main Activity only launches once per app-launch and we can do our initialization here.</li>
+            <li>Add a call to <code>Microsoft.WindowsAzure.MobileServices.CurrentPlatform.Init ();</code> in the <code>OnCreate</code> override - you can place it just before the <code>Forms.Init</code> call.</li>
+        </ol>
+
+<p><a href="#" onclick="toggleCode(this,'droid_init');return false;" class="uiitem">Show Code</a><div class="indent-medium" id="droid_init" style="display:none;">
+<pre class="prettyprint">
+protected override void OnCreate(Bundle bundle)
+{
+    base.OnCreate(bundle);
+
+    <mark>Microsoft.WindowsAzure.MobileServices.CurrentPlatform.Init ();</mark>
+
+    global::Xamarin.Forms.Forms.Init(this, bundle);
+    LoadApplication(new App());
+}
+</pre></div></p>        
+
+        <h3>iOS</h3>
+        <ol>
+            <li>Open the <b>AppDelegate.cs</b> file in the Xamarin.iOS project.</li>
+            <li>Add a call to <code>Microsoft.WindowsAzure.MobileServices.CurrentPlatform.Init ();</code> in the <code>FinishedLaunching</code> override - you can place it just before the <code>Forms.Init</code> call.</li>
+        </ol>
+<p><a href="#" onclick="toggleCode(this,'ios_init');return false;" class="uiitem">Show Code</a><div class="indent-medium" id="ios_init" style="display:none;">
+<pre class="prettyprint">
+public override bool FinishedLaunching(UIApplication app, NSDictionary options)
+{
+    <mark>Microsoft.WindowsAzure.MobileServices.CurrentPlatform.Init ();</mark>
+
+    global::Xamarin.Forms.Forms.Init();
+    LoadApplication(new App());
+
+    return base.FinishedLaunching(app, options);
+}
+</pre></div></p>        
+
+
+        <h2>Create a new service class to interact with Azure</h2>
+        <p>
+            The <b>Data</b> assembly has an interface defined to interact with our survey data service. Currently, it's implemented with a mock class for local testing. Our goal is to eventually replace this with a complete implementation that talks to Azure (or some other online cloud provider).
+        </p>
+        <ol>
+            <li>Open the <b>ISurveyQuestionService.cs</b> file in the <b>Interfaces</b> folder of the <b>CastMyVote.Data</b> project. This is the interface we need to implement.</li>
+            <li>Let's start by creating a new class that implements the interface.</li>
+            <li>Add a new source file named "AzureSurveyService.cs" in the <b>Services</b> folder.</li>
+            <li>Have it implement <code>ISurveyQuestionService</code> - you can use the built-in IDE support to add each required method stub. We won't  be actually providing an implementation yet, but all the methods need to be present. Just leave the <code class="prettyprint">throw new NotImplementedException();</code> in place for now.</li>
+        </ol>
+
+        <h2>Create a MobileServiceClient</h2>
+        <p>
+        To interact with an Azure service, you use a <code>MobileServiceClient</code> object. We'll create one and place it into our new <code>AzureSurveyService</code> class.
+        </p>
+        <ol>
+            <li>Add a new private field of type <code>MobileServiceClient</code>.</li>
+            <li>Add a new private method named <b>Initialize</b>, create a mobile service client object and assign it to your field. You will need the URL of the Azure service to pass into the constructor. We are working with a pre-built service (actually it's the same service built in <b>AZR110</b> if you want to use your version). The URL to the pre-built server is: <a href="https://xamu-voter.azurewebsites.net"></a>https://xamu-voter.azurewebsites.net.</li>
+        </ol>
+<p><a href="#" onclick="toggleCode(this,'init_msc');return false;" class="uiitem">Show Code</a><div class="indent-medium" id="init_msc" style="display:none;">
+<pre class="prettyprint">
+public class AzureSurveyService : ISurveyQuestionService
+{
+    const string AzureUrl = "https://xamu-voter.azurewebsites.net";
+    MobileServiceClient client;
+
+    void Initialize()
+    {
+        <mark>client = new MobileServiceClient (AzureUrl);</mark>
+    }
+
+    public Task AddOrUpdateSurveResponseAsync (SurveyResponse response)
+    {
+        throw new NotImplementedException ();
+    }
+    ...
+}
+</pre></div></p>
+        <ol start="3">
+            <li>Add a check into the <code>Initialize</code> method to see if the <code>MobileServiceClient</code> has been created (non-null) and if so, return. We want to be able to call this method multiple times, but only have the logic get executed once.
+            </li>
+            <li>Next, add a call to the <code>Initialize</code> method into each of your implementation methods - we will create it the first time we actually use the object (vs. when it is created).</li>
+        </ol>
+<p><a href="#" onclick="toggleCode(this,'check_null');return false;" class="uiitem">Show Code</a><div class="indent-medium" id="check_null" style="display:none;">
+<pre class="prettyprint">
+public class AzureSurveyService : ISurveyQuestionService
+{
+...
+    void Initialize()
+    {
+        <mark>if (client != null)
+            return;</mark>
+
+        client = new MobileServiceClient (AzureUrl);
+    }
+
+    public Task AddOrUpdateSurveResponseAsync (SurveyResponse response)
+    {
+        <mark>Initialize ();</mark>
+        throw new NotImplementedException ();
+    }
+
+    public Task DeleteSurveyResponseAsync (SurveyResponse response)
+    {
+        <mark>Initialize ();</mark>
+        throw new NotImplementedException ();
+    }
+...
+}
+</pre></div></p>  
+
+        <h2>Replace the service mock</h2>
+        <p>
+        Now, let's use our new Azure service!
+        </p>
+        <ol>
+            <li>Open the <b>MainPage.xaml.cs</b> file. It allocates an <code>ISurveyQuestionService</code> as a field in the class. Replace the <code>MockSurveyQuestionService</code> instance with a new <code>AzureSurveyService</code> instance.</li>
+        </ol>
+
+<p><a href="#" onclick="toggleCode(this,'use_azure');return false;" class="uiitem">Show Code</a><div class="indent-medium" id="use_azure" style="display:none;">
+<pre class="prettyprint">
+public class MainPage : ContentPage
+{
+    readonly ISurveyQuestionService service = <mark>new AzureSurveyService();</mark>
+    ...
+}
+</pre></div></p> 
+        <ol start="2">
+            <li>Run the application - it should now fail and display a message indicating that the called method is not implemented. However, we will have created our Azure connection and are now setup to start implementing data access methods!</li>
+        <img class="indent-none" src="./res/images/ex1-run-fail.png" />
+        </ol>
+
+        <h1>Summary</h1>
+        <p>
+            In this exercise, you added support to an existing Xamarin.Forms application to access an Azure mobile service.
+        </p>
+        <div class="align-right">
+            <a href="../Start%20Here.html">Go Back</a>
+        </div>
+    </section>
+
+    <script src="./res/js/jquery.min.js"></script>
+    <script src="./res/js/prettify.js"></script>
+    <script src="./res/js/script.js"></script>
+
+    <footer>Copyright (C) 2017 Xamarin</footer>
+</body>
+</html>

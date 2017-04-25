@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+    <title>Fill in the logic to query and update our survey records</title>
+    <link rel="stylesheet" type="text/css" href="./res/styles/normalize.css">
+    <link rel="stylesheet" type="text/css" href="./res/styles/prettify.css" />
+    <link rel="stylesheet" type="text/css" href="./res/styles/styles.css">
+</head>
+
+<body>
+    <!-- Use the same title as the StartHere -->
+    <header>Building an Azure Mobile App Client</header>
+
+    <section id="main">
+
+        <h1 id="page-title"></h1>
+
+        <h2>Duration</h2>
+        <p>10 minutes</p>
+
+        <h2>Goals</h2>
+        <p>
+            In this lab exercise, you will continue your modification of the <b>CastMyVote</b> Xamarin.Forms to modify the data structures being used by the application to reflect the shape of the service.
+        </p>
+
+        <h2>Assets</h2>
+        <p>
+            There is a completed version of the exercise in the <b>Part 02 Resources</b> folder.
+        </p>
+
+        <h2>Challenge</h2>
+        <p>
+        You can explore on your own to implement the functionality for your service, or use the step-by-step instructions below.
+        </p>
+        <p>
+        There are two classes defined in the app which are used to hold the data that drives the UI.
+        </p>
+        <table class="indent-medium grid">
+            <tr>
+                <th>Class</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td><code>SurveyQuestion</code></td>
+                <td>This class holds a single question that includes text and a set of answers delimited by a '|'.</td>
+            </tr>
+            <tr>
+                <td><code>SurveyResponse</code></td>
+                <td>This class is used to represent the response to a survey question. It includes a property for the responder's name, the question ID being answered, and the index of the answer chosen.</td>
+            </tr>
+        </table>
+
+        <p>
+            The server endpoints we will be interacting with have data similar to the above data structures, however, when the developers created the service, they deviated slightly from the specification (or maybe <em>we</em> deviated from the specification when creating the client!) Here's what the server is returning in JSON which needs to be matched up to the two data structures.
+        </p>
+
+        <h4>/tables/questions</h4>
+<pre class="indent-medium codeblock">
+{
+    "deleted": false,
+    "updatedAt": "2016-08-16T15:35:22.624Z",
+    "createdAt": "2016-08-16T15:35:22.609Z",
+    "version": "AAAAAAAAB9I=",
+    "id": "{unique id here}",
+    "answers": "McDonalds|Sushi King|Olive Garden|Outback Steakhouse|KFC",
+    "text": "Where should we have lunch?"
+}
+</pre>
+
+        <h4>/tables/responses</h4>
+<pre class="indent-medium codeblock">
+{
+    "deleted": false,
+    "updatedAt": "2016-08-16T15:57:22.595Z",
+    "createdAt": "2016-08-16T15:57:22.579Z",
+    "version": "AAAAAAAAB9g=",
+    "id": "{unique id here}",
+    "answer": 0,
+    "questionId": "{question id here}",
+    "name": "{name here}"
+}
+</pre>
+
+        <p>The two classes will need to have Json.NET attributes applied to set the name of the table and make sure the properties conform to the above data structures.</p>
+
+        <!-- Steps -->
+        <h1>Steps</h1>
+
+        <h2>Modify the DTO to match the JSON response</h2>
+        <p>
+            If we tried to use the current data structures as DTOs, they would not map much of the API, and in fact would actually hit the wrong endpoint, for example: <b>SurveyQuestion</b> instead of <b>questions</b>. We could fix this by renaming the class and it's properties - but that's undesirable since it would ripple throughout the application. Instead, let's fix this problem by applying Json.NET attributes to our DTO to change the serialization format.
+        </p>
+        <ol>
+            <li>Open the <b>SurveyQuestion.cs</b> source file in the <b>Models</b> folder.</li>
+            <li>Notice the property names don't match our JSON expected shape, and the name of the class is being used as the endpoint name - which doesn't match.</li>
+            <li>Add a <code class="prettyprint">[Newtonsoft.Json.JsonObject(Title="questions")]</code> attribute to the class to fix the endpoint name.</li>
+            <li>Add a <code class="prettyprint">[Newtonsoft.Json.JsonProperty("text")]</code> attribute to the <code>Question</code> property to switch the name.</li>
+        </ol>
+            
+<p><a href="#" onclick="toggleCode(this,'fixupModels');return false;" class="uiitem">Show Code</a><div class="indent-medium" id="fixupModels" style="display:none;">
+<pre class="prettyprint">
+using Newtonsoft.Json;
+
+<mark>[JsonObject(Title = "questions")]</mark>
+public class SurveyQuestion
+{
+    public string Id { get; set; }
+    <mark>[JsonProperty("text")]</mark>
+    public string Question { get; set; }
+    public string Answers { get; set; }
+
+    public override string ToString()
+    {
+        return Question;
+    }
+}
+</pre></div></p>
+
+        <ol start="5">
+            <li>Do the same fixup for the <code>SurveyResponse</code> object - recall that the JSON shape:
+                <ul class="indent-none">
+                    <li>Is exposed on an endpoint named "responses".</li>
+                    <li>Has the fields "questionId", "name", and "answer".</li>
+                    <li>We will want to use the <b>createdAt</b> property a bit later on, so add a new property to provide access to the field.</li>
+                </ul>
+            </li>
+        </ol>
+
+<p><a href="#" onclick="toggleCode(this,'fixupModels2');return false;" class="uiitem">Show Code</a><div class="indent-medium" id="fixupModels2" style="display:none;">
+<pre class="prettyprint">
+using Newtonsoft.Json;
+using Microsoft.WindowsAzure.MobileServices;
+...
+<mark>[JsonObject(Title="responses")]</mark>
+public class SurveyResponse
+{
+    public string Id { get; set; }
+    <mark>[JsonProperty("questionId")]</mark>
+    public string SurveyQuestionId { get; set; }
+    public string Name { get; set; }
+    <mark>[JsonProperty ("answer")]</mark>
+    public int ResponseIndex { get; set; }
+    [UpdatedAt]
+    public DateTimeOffset UpdatedAt { get; set; }    
+}
+</pre></div></p>          
+
+        <h1>Summary</h1>
+        <p>
+            In this exercise, you finished the Xamarin client application and implemented a complete client to access your Azure survey service.
+        </p>
+        <div class="align-right">
+            <a href="../Start%20Here.html">Go Back</a>
+        </div>
+    </section>
+
+    <script src="./res/js/jquery.min.js"></script>
+    <script src="./res/js/prettify.js"></script>
+    <script src="./res/js/script.js"></script>
+
+    <footer>Copyright (C) 2017 Xamarin</footer>
+</body>
+</html>

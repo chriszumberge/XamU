@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+    <title>Building an Azure Mobile App Client</title>
+    <link rel="stylesheet" type="text/css" href="./parts/res/styles/normalize.css">
+    <link rel="stylesheet" type="text/css" href="./parts/res/styles/prettify.css">
+    <link rel="stylesheet" type="text/css" href="./parts/res/styles/styles.css">
+</head>
+
+<body>
+    <!-- This will be filled in at runtime -->
+    <header role="course-title"></header>
+
+    <section id="main">
+
+        <h2>Before you begin</h2>
+        <p>
+        This is a cross-platform class which uses Xamarin.Forms to to target iOS, Android or Windows. To complete the coding exercises, you will need a Xamarin development environment with either an emulator/simulator or a device to run the exercise on. Please read the <a href="https://university.xamarin.com/resources/setup-requirements">setup requirements</a> if you need help installing the Xamarin development environment.
+        </p>
+
+        <p>
+        This class assumes you have already setup an Azure account and have a basic knowledge of the Azure Management portal. If you have not done anything with Azure yet, then please review the materials from <a target="_blank" href="">AZR101 - Introduction to Azure</a>.
+        </p>
+
+        <h2>Overview</h2>
+        <p>
+            This class focuses on the client-side model for building a Xamarin application that uses an Azure App Service mobile back-end. We will explore the techniques used to add support to an existing Xamarin application to consume data from an Azure service, how to support offline caching and synchronization, and how to manage conflicts when they arise.
+        </p>
+
+        <h2>Lecture</h2>
+        <p><a href="./parts/slides.pdf">AZR115 - Building an Azure Mobile App Client</a>.</p>
+
+        <h2>Objectives</h2>
+        <ol>
+            <li>Connect your mobile app to Azure</li>
+            <li>Access table data from Azure</li>
+            <li>Add support for offline synchronization</li>
+        </ol>
+
+        <h2>Exercises</h2>
+        <ol>
+
+            <li><div class="objective">Add Azure support to our Xamarin application</div>
+            <a href="./parts/part1.html">Exercise</a>
+            <br />
+            You will start by adding support to connect to an existing Xamarin.Forms application to an Azure App Service mobile app.
+            </li>
+
+            <li><div class="objective">Customize the DTOs for the Survey service</div>
+            <a href="./parts/part2.html">Exercise</a>
+            <br />
+            Next, you will annotate the Data Transfer Objects (DTOs) in the app to properly match the shape of the service data being interacted with.
+            </li>
+
+            <li><div class="objective">Fill in the logic to query and update our survey records</div>
+            <a href="./parts/part3.html">Exercise</a>
+            <br />
+            In this exercise, you will complete the logic to read and update the survey response records in your application.
+            </li>
+
+            <li><div class="objective">Add support to our app for offline data caching</div>
+            <a href="./parts/part4.html">Exercise</a>
+            <br />
+            In this exercise, you will change your application to support offline synchronization.
+            </li>             
+
+            <li><div class="objective">Synchronizing to the remote database</div>
+            <a href="./parts/part5.html">Exercise</a>
+            <br />
+            In this exercise, you will add the code necessary to push and pull changes from the remote DB to the local DB and back.
+            </li> 
+
+            <li><div class="objective">Add error recovery code to support conflicts</div>
+            <a href="./parts/part6.html">Homework Exercise</a>
+            <br />
+            In this homework exercise, you will add code into the survey application to handle conflict errors that occur during synchronization.
+            </li> 
+        </ol>
+
+        <h2>Model-View-ViewModel</h2>
+        <p>
+        	For fun, there is a completed version of the entire lab, but written using the Model-View-ViewModel pattern to demonstrate how to deal with asynchronous collection loading, busy indicators, passing data between screens, and integrating Azure services into your MVVM apps. If you are interested in MVVM feel free to explore the sample after class; it's contained in the <b>MVVM</b> folder.
+        </p>
+
+        <h2>Additional References</h2>
+         <div class="wslist">
+            <a target="_blank" href="https://github.com/Azure/azure-mobile-apps-net-client">Azure SDK Client .NET source code (Github)</a>        
+            <a target="_blank" href="https://azure.microsoft.com/en-us/documentation/articles/app-service-mobile-offline-data-sync/">Offline Data Sync in Azure Mobile Apps</a>
+
+            <a target="_blank" href="https://shellmonger.com/2016/05/02/30-days-of-zumo-v2-azure-mobile-apps-day-15-understanding-offline-sync/">Understanding Offline Sync</a>
+
+            <a target="_blank" href="https://blog.xamarin.com/add-a-backend-to-your-app-in-10-minutes/">Add an Azure backend to your Xamarin app in 10 minutes</a>
+        </div>
+
+    </section>
+
+    <script src="./parts/res/js/jquery.min.js"></script>
+    <script src="./parts/res/js/prettify.js"></script>
+    <script src="./parts/res/js/script.js"></script>
+
+    <footer>Copyright (C) 2017 Xamarin</footer>
+</body>
+</html>
+
