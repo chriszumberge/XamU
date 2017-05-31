@@ -4,7 +4,9 @@ using System.Linq;
 using System.Text;
 
 using Xamarin.Forms;
+using Xamarin.Forms.Xaml;
 
+[assembly: XamlCompilation(XamlCompilationOptions.Compile)]
 namespace Calculator
 {
 	public class App : Application
@@ -12,7 +14,7 @@ namespace Calculator
 		public App()
 		{
 			// The root page of your application
-            MainPage = new MainPage();
+			MainPage = new MainPage();
 		}
 
 		protected override void OnStart()

@@ -3,14 +3,14 @@ using Xamarin.Forms;
 
 namespace Calculator
 {
-	public class MainPage : ContentPage
+	public class OldMainPage : ContentPage
 	{
 		Label resultText;
 		int currentState = 1;
 		string mathOperator;
 		double firstNumber, secondNumber;
 
-		public MainPage()
+		public OldMainPage()
 		{
 			Grid layout = new Grid {
 				Padding = new Thickness(5,0),
@@ -167,12 +167,12 @@ namespace Calculator
 		void OnCalculate(object sender, EventArgs e)
 		{
 			if (currentState == 2)
-            {
-                var result = SimpleCalculator.Calculate(firstNumber, secondNumber, mathOperator);	
+			{
+				var result = SimpleCalculator.Calculate(firstNumber, secondNumber, mathOperator);	
 
 				this.resultText.Text = result.ToString("N0");
-                firstNumber = result;
-                currentState = -1;
+				firstNumber = result;
+				currentState = -1;
 			}
 		}
 	}
