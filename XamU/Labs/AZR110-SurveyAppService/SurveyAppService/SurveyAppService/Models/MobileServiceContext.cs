@@ -36,5 +36,7 @@ namespace SurveyAppService.Models
         }
 
         public System.Data.Entity.DbSet<SurveyAppService.DataObjects.SurveyResponse> SurveyResponses { get; set; }
+
+        public System.Data.Entity.DbSet<SurveyAppService.DataObjects.SurveyQuestion> SurveyQuestions { get; set; }
     }
 }
