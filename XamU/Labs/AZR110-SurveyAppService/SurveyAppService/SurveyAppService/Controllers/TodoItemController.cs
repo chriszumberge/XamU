@@ -21,32 +21,32 @@ namespace SurveyAppService.Controllers
         // GET tables/TodoItem
         public IQueryable<TodoItem> GetAllTodoItems()
         {
-            return Query();
+            return base.Query();
         }
 
         // GET tables/TodoItem/48D68C86-6EA6-4C25-AA33-223FC9A27959
         public SingleResult<TodoItem> GetTodoItem(string id)
         {
-            return Lookup(id);
+            return base.Lookup(id);
         }
 
         // PATCH tables/TodoItem/48D68C86-6EA6-4C25-AA33-223FC9A27959
         public Task<TodoItem> PatchTodoItem(string id, Delta<TodoItem> patch)
         {
-            return UpdateAsync(id, patch);
+            return base.UpdateAsync(id, patch);
         }
 
         // POST tables/TodoItem
         public async Task<IHttpActionResult> PostTodoItem(TodoItem item)
         {
-            TodoItem current = await InsertAsync(item);
+            TodoItem current = await base.InsertAsync(item);
             return CreatedAtRoute("Tables", new { id = current.Id }, current);
         }
 
         // DELETE tables/TodoItem/48D68C86-6EA6-4C25-AA33-223FC9A27959
         public Task DeleteTodoItem(string id)
         {
-            return DeleteAsync(id);
+            return base.DeleteAsync(id);
         }
     }
 }
